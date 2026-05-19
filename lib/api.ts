@@ -1,4 +1,5 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://api-blackbox-crm.207.180.245.89.nip.io";
+// Use relative URL — works on any domain via Next.js rewrites
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
 
 interface ApiResponse<T = any> {
   ok: boolean;
