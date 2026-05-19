@@ -1,290 +1,317 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
+import { api } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEnvelope, faInbox, faSearch, faPlug, faCheck, faExternalLinkAlt, faClock, faServer, faTrash, faPlus } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle, faMicrosoft } from "@fortawesome/free-brands-svg-icons";
+import {
+  faEnvelope, faInbox, faSearch, faPlus, faPaperPlane,
+  faArrowLeft, faTrash, faSync, faCheck, faTimes,
+  faPaperclip, faExclamationTriangle, faChevronLeft, faChevronRight,
+} from "@fortawesome/free-solid-svg-icons";
+import { faGoogle } from "@fortawesome/free-brands-svg-icons";
 
-interface EmailConfig {
-  id: string;
-  provider: "gmail" | "outlook" | "smtp";
-  email: string;
-  connected: boolean;
-  createdAt: string;
+interface EmailMessage {
+  id: string; threadId: string; from: string; subject: string;
+  date: string; snippet: string; isUnread: boolean; labelIds: string[];
 }
 
-// Simulated email configurations (in real app, stored in DB)
-let mockConfigs: EmailConfig[] = [];
+interface EmailDetail {
+  id: string; threadId: string; from: string; to: string;
+  subject: string; date: string; body: string; snippet: string;
+}
 
 export default function MessagesPage() {
+  const searchParams = useSearchParams();
+  const [status, setStatus] = useState<{ connected: boolean; email: string | null } | null>(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [messages, setMessages] = useState<EmailMessage[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedMsg, setSelectedMsg] = useState<EmailDetail | null>(null);
+  const [msgLoading, setMsgLoading] = useState(false);
+  const [showCompose, setShowCompose] = useState(false);
+  const [compose, setCompose] = useState({ to: "", subject: "", body: "" });
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
-  const [showConfig, setShowConfig] = useState<string | null>(null);
-  const [configForm, setConfigForm] = useState({ email: "", smtpHost: "", smtpPort: "587", smtpUser: "", smtpPass: "" });
-  const [configs, setConfigs] = useState<EmailConfig[]>(mockConfigs);
-  const [connecting, setConnecting] = useState(false);
-  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const connectedGmail = configs.find((c) => c.provider === "gmail" && c.connected);
-  const connectedOutlook = configs.find((c) => c.provider === "outlook" && c.connected);
-  const connectedSmtp = configs.filter((c) => c.provider === "smtp" && c.connected);
+  // Check connection status
+  const checkStatus = useCallback(async () => {
+    const res = await api.get<{ connected: boolean; email: string | null }>("/api/gmail/status");
+    if (res.ok && res.data) setStatus(res.data);
+    setStatusLoading(false);
+  }, []);
 
-  function startConfig(provider: string) {
-    setShowConfig(provider);
-    setConfigForm({ email: "", smtpHost: "smtp.gmail.com", smtpPort: "587", smtpUser: "", smtpPass: "" });
-    setMessage(null);
-  }
+  useEffect(() => { checkStatus(); }, [checkStatus]);
 
-  async function handleConnect() {
-    setConnecting(true);
-    setMessage(null);
-
-    try {
-      // Simulate OAuth / SMTP connection
-      await new Promise((r) => setTimeout(r, 2000));
-
-      const newConfig: EmailConfig = {
-        id: Date.now().toString(),
-        provider: showConfig as EmailConfig["provider"],
-        email: configForm.email || `${showConfig}@connected.com`,
-        connected: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Replace existing config for same provider
-      const updated = configs.filter((c) => c.provider !== showConfig).concat(newConfig);
-      setConfigs(updated);
-      mockConfigs = updated;
-      setShowConfig(null);
-      setMessage({ type: "success", text: `Successfully connected to ${showConfig === "gmail" ? "Gmail" : showConfig === "outlook" ? "Outlook" : "SMTP server"}!` });
-    } catch {
-      setMessage({ type: "error", text: "Connection failed. Please check your credentials." });
+  // Handle OAuth callback params
+  useEffect(() => {
+    const gmail = searchParams.get("gmail");
+    const email = searchParams.get("email");
+    const reason = searchParams.get("reason");
+    if (gmail === "connected" && email) {
+      setSuccess(`Gmail connected — ${email}`);
+      checkStatus();
+    } else if (gmail === "error" && reason) {
+      setError(`Connection failed: ${reason}`);
     }
-    setConnecting(false);
+  }, [searchParams, checkStatus]);
+
+  // Fetch inbox
+  const fetchInbox = useCallback(async () => {
+    setLoading(true);
+    const res = await api.get<{ messages: EmailMessage[]; nextPageToken: string | null }>("/api/gmail/messages");
+    if (res.ok && res.data) setMessages(res.data.messages);
+    else if (res.error) setError(res.error);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (status?.connected) fetchInbox();
+  }, [status, fetchInbox]);
+
+  // Read message
+  async function openMessage(id: string) {
+    setMsgLoading(true);
+    setSelectedMsg(null);
+    const res = await api.get<EmailDetail>(`/api/gmail/messages/${id}`);
+    if (res.ok && res.data) setSelectedMsg(res.data);
+    setMsgLoading(false);
+    // Mark as read in list
+    setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, isUnread: false } : m)));
   }
 
-  function handleDisconnect(id: string) {
-    const updated = configs.filter((c) => c.id !== id);
-    setConfigs(updated);
-    mockConfigs = updated;
+  // Start OAuth
+  async function startOAuth() {
+    const res = await api.get<{ url: string }>("/api/gmail/auth");
+    if (res.ok && res.data) {
+      window.location.href = res.data.url;
+    }
   }
+
+  // Disconnect
+  async function disconnect() {
+    if (!confirm("Disconnect Gmail? You can reconnect anytime.")) return;
+    await api.delete("/api/gmail/disconnect");
+    setStatus({ connected: false, email: null });
+    setMessages([]);
+    setSelectedMsg(null);
+  }
+
+  // Send email (compose or reply)
+  async function sendEmail(replyTo?: EmailDetail) {
+    setSending(true);
+    setError("");
+    const body = replyTo
+      ? { to: replyTo.from.match(/<(.+)>/) ? replyTo.from.match(/<(.+)>/)![1] : replyTo.from, subject: `Re: ${replyTo.subject}`, body: compose.body, threadId: replyTo.threadId }
+      : compose;
+
+    if (!body.to || !body.subject || !body.body) {
+      setError("All fields are required");
+      setSending(false);
+      return;
+    }
+
+    const res = await api.post("/api/gmail/send", body);
+    if (res.ok) {
+      setSuccess("Email sent!");
+      setShowCompose(false);
+      setCompose({ to: "", subject: "", body: "" });
+      setSelectedMsg(null);
+      setTimeout(() => fetchInbox(), 1000);
+    } else {
+      setError(res.error || "Failed to send");
+    }
+    setSending(false);
+  }
+
+  function replyTo(msg: EmailDetail) {
+    setCompose({ to: "", subject: "", body: `\n\n---\nOn ${msg.date}, ${msg.from} wrote:\n> ${msg.body.slice(0, 300).replace(/\n/g, "\n> ")}` });
+    setShowCompose(true);
+    setSelectedMsg(msg);
+  }
+
+  // Filter messages
+  const filtered = search ? messages.filter((m) => m.subject.toLowerCase().includes(search.toLowerCase()) || m.from.toLowerCase().includes(search.toLowerCase())) : messages;
+
+  if (statusLoading) return <div className="text-center py-12 text-muted-foreground">Loading...</div>;
 
   return (
-    <div className="space-y-6">
-      {message && (
-        <div className={`p-4 rounded-xl text-sm flex items-center gap-2 ${
-          message.type === "success" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
-        }`}>
-          <FontAwesomeIcon icon={message.type === "success" ? faCheck : faEnvelope} className="shrink-0" />
-          {message.text}
+    <div className="space-y-4">
+      {/* Messages */}
+      {error && (
+        <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700 flex items-center gap-2">
+          <FontAwesomeIcon icon={faExclamationTriangle} />{error}
+          <button onClick={() => setError("")} className="ml-auto"><FontAwesomeIcon icon={faTimes} /></button>
+        </div>
+      )}
+      {success && (
+        <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-700 flex items-center gap-2">
+          <FontAwesomeIcon icon={faCheck} />{success}
+          <button onClick={() => setSuccess("")} className="ml-auto"><FontAwesomeIcon icon={faTimes} /></button>
         </div>
       )}
 
-      {/* Integration Cards */}
-      <div>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Email Integrations</h2>
-        <div className="grid md:grid-cols-3 gap-4">
-          {/* Gmail */}
-          <div className={`bg-card rounded-2xl border p-6 flex flex-col hover:shadow-md transition-all ${connectedGmail ? "border-green-300 bg-green-50/30" : "border-border/50"}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#EA433515" }}>
-                <FontAwesomeIcon icon={faGoogle} className="h-5 w-5" style={{ color: "#EA4335" }} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Gmail</h3>
-                <p className="text-xs text-muted-foreground">{connectedGmail ? connectedGmail.email : "Not connected"}</p>
-              </div>
+      {!status?.connected ? (
+        /* Not connected — show connect prompt */
+        <div className="space-y-6">
+          <h2 className="text-lg font-semibold text-foreground">Email</h2>
+          <div className="bg-card rounded-2xl border border-border/50 p-8 text-center max-w-lg mx-auto">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#EA433515" }}>
+              <FontAwesomeIcon icon={faGoogle} className="h-8 w-8" style={{ color: "#EA4335" }} />
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-4">
-              Connect Gmail to send/receive emails, auto-log conversations to client profiles, and sync your calendar.
+            <h3 className="text-lg font-semibold text-foreground mb-2">Connect Your Gmail</h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              Link your Gmail account to read, reply, and send emails directly from Blackbox CRM.
+              Your credentials are secure — we use Google OAuth with read-only + send permissions.
             </p>
-            {connectedGmail ? (
-              <button onClick={() => handleDisconnect(connectedGmail.id)}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 h-10 px-4 transition-all">
-                <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" /> Disconnect
-              </button>
-            ) : showConfig === "gmail" ? (
-              <div className="space-y-3 border-t border-border/40 pt-4">
-                <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">Gmail Address</label>
-                  <input value={configForm.email} onChange={(e) => setConfigForm({ ...configForm, email: e.target.value })}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="you@gmail.com" />
-                </div>
-                <p className="text-xs text-muted-foreground">Google OAuth will open in a popup to authorize access.</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowConfig(null)} className="flex-1 rounded-lg text-sm font-medium border border-input bg-background hover:bg-accent h-9 transition-all">Cancel</button>
-                  <button onClick={handleConnect} disabled={connecting}
-                    className="flex-1 rounded-lg text-sm font-semibold text-white h-9 transition-all disabled:opacity-50"
-                    style={{ backgroundColor: "#EA4335" }}>
-                    {connecting ? "Connecting..." : "Authorize"}
+            <button onClick={startOAuth}
+              className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white h-11 px-6 transition-all hover:opacity-90"
+              style={{ backgroundColor: "#EA4335" }}>
+              <FontAwesomeIcon icon={faGoogle} className="h-4 w-4" />
+              Connect Gmail
+            </button>
+            <p className="text-xs text-muted-foreground mt-4">
+              You'll be redirected to Google to authorize access
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* Connected — show inbox */
+        <div className="flex flex-col lg:flex-row gap-4" style={{ minHeight: "calc(100vh - 12rem)" }}>
+          {/* Inbox sidebar */}
+          <div className="lg:w-96 shrink-0 bg-card rounded-2xl border border-border/50 flex flex-col">
+            <div className="p-4 border-b border-border/50 space-y-3">
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <FontAwesomeIcon icon={faInbox} className="text-secondary" />
+                  Inbox — <span className="text-muted-foreground font-normal text-xs">{status.email}</span>
+                </h2>
+                <div className="flex items-center gap-1">
+                  <button onClick={fetchInbox} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Refresh">
+                    <FontAwesomeIcon icon={faSync} className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                  <button onClick={disconnect} className="p-1.5 rounded-lg hover:bg-muted transition-colors" title="Disconnect">
+                    <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
               </div>
-            ) : (
-              <button onClick={() => startConfig("gmail")}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium border-2 border-border hover:border-primary text-foreground hover:text-primary h-10 px-4 transition-all">
-                <FontAwesomeIcon icon={faPlug} className="h-3.5 w-3.5" /> Connect Gmail
+              <button onClick={() => { setCompose({ to: "", subject: "", body: "" }); setShowCompose(true); setSelectedMsg(null); }}
+                className="w-full flex items-center justify-center gap-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-9 transition-all">
+                <FontAwesomeIcon icon={faPlus} className="h-3.5 w-3.5" /> Compose
               </button>
-            )}
-          </div>
-
-          {/* Outlook */}
-          <div className={`bg-card rounded-2xl border p-6 flex flex-col hover:shadow-md transition-all ${connectedOutlook ? "border-blue-300 bg-blue-50/30" : "border-border/50"}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#0078D415" }}>
-                <FontAwesomeIcon icon={faMicrosoft} className="h-5 w-5" style={{ color: "#0078D4" }} />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Outlook</h3>
-                <p className="text-xs text-muted-foreground">{connectedOutlook ? connectedOutlook.email : "Not connected"}</p>
+              <div className="relative">
+                <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3 w-3" />
+                <input value={search} onChange={(e) => setSearch(e.target.value)}
+                  className="w-full rounded-lg border border-input bg-background pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Search..." />
               </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-4">
-              Link Microsoft 365 for seamless email, calendar, and contact sync with your CRM.
-            </p>
-            {connectedOutlook ? (
-              <button onClick={() => handleDisconnect(connectedOutlook.id)}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium border border-red-200 text-red-600 hover:bg-red-50 h-10 px-4 transition-all">
-                <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" /> Disconnect
-              </button>
-            ) : showConfig === "outlook" ? (
-              <div className="space-y-3 border-t border-border/40 pt-4">
-                <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">Outlook Email</label>
-                  <input value={configForm.email} onChange={(e) => setConfigForm({ ...configForm, email: e.target.value })}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="you@outlook.com" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowConfig(null)} className="flex-1 rounded-lg text-sm font-medium border border-input bg-background hover:bg-accent h-9 transition-all">Cancel</button>
-                  <button onClick={handleConnect} disabled={connecting}
-                    className="flex-1 rounded-lg text-sm font-semibold text-white h-9 transition-all disabled:opacity-50"
-                    style={{ backgroundColor: "#0078D4" }}>
-                    {connecting ? "Connecting..." : "Authorize"}
+            <div className="flex-1 overflow-y-auto">
+              {loading ? (
+                <div className="text-center py-8 text-xs text-muted-foreground">Loading...</div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-8 text-xs text-muted-foreground">No messages</div>
+              ) : (
+                filtered.map((msg) => (
+                  <button key={msg.id} onClick={() => openMessage(msg.id)}
+                    className={`w-full text-left px-4 py-3 border-b border-border/30 hover:bg-muted/30 transition-colors ${
+                      selectedMsg?.id === msg.id ? "bg-primary/5" : ""
+                    } ${msg.isUnread ? "font-semibold" : ""}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs text-foreground truncate">{msg.from.replace(/<.*>/, "").trim()}</p>
+                      <p className="text-[10px] text-muted-foreground shrink-0">{formatDate(msg.date)}</p>
+                    </div>
+                    <p className="text-xs mt-0.5 truncate">{msg.subject}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5 truncate">{msg.snippet}</p>
+                  </button>
+                ))
+              )}
+            </div>
+          </div>
+
+          {/* Reading pane / Compose */}
+          <div className="flex-1 bg-card rounded-2xl border border-border/50 min-h-[400px]">
+            {showCompose ? (
+              <div className="p-6 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-base font-semibold text-foreground">{selectedMsg ? "Reply" : "New Message"}</h3>
+                  <button onClick={() => { setShowCompose(false); setSelectedMsg(null); }} className="p-1.5 rounded-lg hover:bg-muted">
+                    <FontAwesomeIcon icon={faTimes} className="h-4 w-4 text-muted-foreground" />
                   </button>
                 </div>
-              </div>
-            ) : (
-              <button onClick={() => startConfig("outlook")}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium border-2 border-border hover:border-primary text-foreground hover:text-primary h-10 px-4 transition-all">
-                <FontAwesomeIcon icon={faPlug} className="h-3.5 w-3.5" /> Connect Outlook
-              </button>
-            )}
-          </div>
-
-          {/* Custom SMTP */}
-          <div className={`bg-card rounded-2xl border p-6 flex flex-col hover:shadow-md transition-all ${connectedSmtp.length > 0 ? "border-gray-400 bg-gray-50/30" : "border-border/50"}`}>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 bg-muted">
-                <FontAwesomeIcon icon={faServer} className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">Custom SMTP</h3>
-                <p className="text-xs text-muted-foreground">{connectedSmtp.length > 0 ? `${connectedSmtp.length} server(s)` : "Not connected"}</p>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed flex-1 mb-4">
-              Use your own email server. Configure custom sending domains and maintain full control.
-            </p>
-            {connectedSmtp.length > 0 ? (
-              <div className="space-y-2">
-                {connectedSmtp.map((c) => (
-                  <div key={c.id} className="flex items-center justify-between text-xs bg-background rounded-lg px-3 py-2 border border-border/40">
-                    <span className="text-foreground font-medium">{c.email}</span>
-                    <button onClick={() => handleDisconnect(c.id)} className="text-red-500 hover:text-red-700"><FontAwesomeIcon icon={faTrash} className="h-3 w-3" /></button>
+                {!selectedMsg && (
+                  <>
+                    <div><label className="block text-xs font-medium text-foreground mb-1">To</label>
+                      <input value={compose.to} onChange={(e) => setCompose({ ...compose, to: e.target.value })}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="recipient@email.com" /></div>
+                    <div><label className="block text-xs font-medium text-foreground mb-1">Subject</label>
+                      <input value={compose.subject} onChange={(e) => setCompose({ ...compose, subject: e.target.value })}
+                        className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Subject" /></div>
+                  </>
+                )}
+                {selectedMsg && (
+                  <div className="bg-muted/30 rounded-lg p-3 text-xs text-muted-foreground">
+                    Replying to: <span className="text-foreground font-medium">{selectedMsg.from}</span><br />
+                    Subject: <span className="text-foreground">{selectedMsg.subject}</span>
                   </div>
-                ))}
-                <button onClick={() => startConfig("smtp")}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-xs font-medium border border-input bg-background hover:bg-muted h-8 transition-all">
-                  <FontAwesomeIcon icon={faPlus} style={{ fontSize: '10px' }} /> Add Server
+                )}
+                <div>
+                  <textarea value={compose.body} onChange={(e) => setCompose({ ...compose, body: e.target.value })} rows={10}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+                    placeholder={selectedMsg ? "Write your reply..." : "Write your message..."} />
+                </div>
+                <button onClick={() => sendEmail(selectedMsg || undefined)} disabled={sending}
+                  className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 transition-all disabled:opacity-50">
+                  <FontAwesomeIcon icon={faPaperPlane} className="h-3.5 w-3.5" />
+                  {sending ? "Sending..." : selectedMsg ? "Send Reply" : "Send"}
                 </button>
               </div>
-            ) : showConfig === "smtp" ? (
-              <div className="space-y-3 border-t border-border/40 pt-4">
-                <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">SMTP Host</label>
-                  <input value={configForm.smtpHost} onChange={(e) => setConfigForm({ ...configForm, smtpHost: e.target.value })}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="smtp.gmail.com" />
+            ) : selectedMsg ? (
+              <div className="p-6">
+                <button onClick={() => setSelectedMsg(null)}
+                  className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
+                  <FontAwesomeIcon icon={faArrowLeft} className="h-3 w-3" /> Back to inbox
+                </button>
+                <h3 className="text-lg font-semibold text-foreground mb-1">{selectedMsg.subject}</h3>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground mb-4">
+                  <span className="font-medium text-foreground">{selectedMsg.from}</span>
+                  <span>{formatDate(selectedMsg.date)}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">Port</label>
-                    <input value={configForm.smtpPort} onChange={(e) => setConfigForm({ ...configForm, smtpPort: e.target.value })}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="587" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-foreground mb-1">Email</label>
-                    <input value={configForm.email} onChange={(e) => setConfigForm({ ...configForm, email: e.target.value })}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="you@domain.com" />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">Username</label>
-                  <input value={configForm.smtpUser} onChange={(e) => setConfigForm({ ...configForm, smtpUser: e.target.value })}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="SMTP username" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-foreground mb-1">Password / App Password</label>
-                  <input type="password" value={configForm.smtpPass} onChange={(e) => setConfigForm({ ...configForm, smtpPass: e.target.value })}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="••••••••" />
-                </div>
-                <div className="flex gap-2">
-                  <button onClick={() => setShowConfig(null)} className="flex-1 rounded-lg text-sm font-medium border border-input bg-background hover:bg-accent h-9 transition-all">Cancel</button>
-                  <button onClick={handleConnect} disabled={connecting}
-                    className="flex-1 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-9 transition-all disabled:opacity-50">
-                    {connecting ? "Testing..." : "Connect"}
+                <div className="flex gap-2 mb-6">
+                  <button onClick={() => replyTo(selectedMsg)}
+                    className="inline-flex items-center gap-1.5 rounded-lg text-xs font-medium bg-primary/10 text-primary hover:bg-primary/20 h-8 px-3 transition-colors">
+                    <FontAwesomeIcon icon={faPaperPlane} className="h-3 w-3" /> Reply
                   </button>
                 </div>
+                <div className="prose prose-sm max-w-none text-sm text-foreground leading-relaxed whitespace-pre-wrap border-t border-border/50 pt-4">
+                  {selectedMsg.body || "(No content)"}
+                </div>
               </div>
+            ) : msgLoading ? (
+              <div className="flex items-center justify-center h-full py-12 text-muted-foreground text-sm">Loading message...</div>
             ) : (
-              <button onClick={() => startConfig("smtp")}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg text-sm font-medium border-2 border-border hover:border-primary text-foreground hover:text-primary h-10 px-4 transition-all">
-                <FontAwesomeIcon icon={faPlug} className="h-3.5 w-3.5" /> Configure SMTP
-              </button>
+              <div className="flex flex-col items-center justify-center h-full py-12 text-muted-foreground text-sm">
+                <FontAwesomeIcon icon={faInbox} className="h-10 w-10 mb-3 opacity-30" />
+                <p>Select a message to read</p>
+              </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Recent Messages */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">Recent Messages</h2>
-          <div className="relative w-64">
-            <FontAwesomeIcon icon={faSearch} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-3.5 w-3.5" />
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-lg border border-input bg-background pl-9 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" placeholder="Search messages..." />
-          </div>
-        </div>
-        {configs.filter((c) => c.connected).length === 0 ? (
-          <div className="bg-card rounded-2xl border border-border/50 p-12 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-              <FontAwesomeIcon icon={faInbox} className="h-7 w-7 text-muted-foreground" />
-            </div>
-            <h3 className="text-base font-semibold text-foreground mb-2">No Messages Yet</h3>
-            <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-              Connect an email account above to see your messages here.
-            </p>
-            <div className="flex items-center justify-center gap-4 mt-4 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1.5"><FontAwesomeIcon icon={faClock} className="h-3 w-3" /> Real-time sync</span>
-              <span className="flex items-center gap-1.5"><FontAwesomeIcon icon={faExternalLinkAlt} className="h-3 w-3" /> Auto-log to clients</span>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-card rounded-2xl border border-border/50 p-6 text-center text-sm text-muted-foreground">
-            Email sync active — messages will appear here as they arrive.
-          </div>
-        )}
-      </div>
-
-      {/* Tip */}
-      <div className="bg-secondary/5 border border-secondary/20 rounded-2xl p-5 flex items-start gap-4">
-        <FontAwesomeIcon icon={faEnvelope} className="h-5 w-5 text-secondary shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-semibold text-foreground mb-1">Pro Tip</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            Connect Gmail for automatic email-to-client logging and calendar sync. Use SMTP for custom domains and white-labeled email delivery.
-          </p>
-        </div>
-      </div>
+      )}
     </div>
   );
+}
+
+function formatDate(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - d.getTime();
+    if (diff < 86400000) return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (diff < 604800000) return d.toLocaleDateString([], { weekday: "short" });
+    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  } catch {
+    return dateStr;
+  }
 }
