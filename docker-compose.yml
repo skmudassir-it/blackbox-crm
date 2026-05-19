@@ -13,48 +13,45 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - NEXT_PUBLIC_API_URL=http://backend:4000
     restart: unless-stopped
     networks:
       - blackbox-net
 
-  # ---- Backend API (Express + Prisma) ----
-  # backend:
-  #   build:
-  #     context: ./backend
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "4000:4000"
-  #   environment:
-  #     - NODE_ENV=production
-  #     - DATABASE_URL=postgresql://blackbox_user:${DB_PASSWORD}@db:5432/blackbox_crm
-  #     - JWT_SECRET=${JWT_SECRET}
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   restart: unless-stopped
-  #   networks:
-  #     - blackbox-net
+  # ---- Backend API (Express + Mongoose) ----
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - MONGODB_URI=mongodb://blackbox_auth:AuthMongo1fb44160%239db2@mongo-transmit-bluetooth-feed-93872i:27017/?authSource=admin
+      - JWT_SECRET=blackbox-crm-jwt-secret-change-in-production-2026
+      - JWT_EXPIRES_IN=7d
+      - FRONTEND_URL=http://blackbox-crm.207.180.245.89.nip.io
+    depends_on:
+      - auth-mongo
+    restart: unless-stopped
+    networks:
+      - blackbox-net
 
-  # ---- PostgreSQL ----
-  # db:
-  #   image: postgres:16-alpine
-  #   environment:
-  #     - POSTGRES_USER=blackbox_user
-  #     - POSTGRES_PASSWORD=${DB_PASSWORD}
-  #     - POSTGRES_DB=blackbox_crm
-  #   volumes:
-  #     - pgdata:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U blackbox_user -d blackbox_crm"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 5
-  #   restart: unless-stopped
-  #   networks:
-  #     - blackbox-net
+  # ---- MongoDB (Auth & User Management) ----
+  auth-mongo:
+    image: mongo:7.0
+    environment:
+      - MONGO_INITDB_DATABASE=blackbox_auth
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    networks:
+      - blackbox-net
 
 networks:
   blackbox-net:
     driver: bridge
-# volumes:
-#   pgdata:
+
+volumes:
+  mongo-data:
