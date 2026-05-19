@@ -8,7 +8,8 @@ export async function connectDB() {
 
   try {
     await mongoose.connect(uri, {
-      serverSelectionTimeoutMS: 5000,
+      dbName: "blackbox_auth",
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
     });
     console.log("✅ MongoDB connected — user-mongo");

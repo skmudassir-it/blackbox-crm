@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/auth-store";
 
 const navLinks = [
   { label: "Features", href: "/features" },
@@ -14,7 +15,17 @@ const navLinks = [
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
+  const handleLogout = () => {
+    logout();
+    setMenuOpen(false);
+    router.push("/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -48,12 +59,63 @@ export default function Navbar() {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/contact"
-            className="ml-3 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
-          >
-            Get Started
-          </Link>
+
+          {/* Auth buttons or user menu */}
+          {user ? (
+            <div className="relative ml-3">
+              <button
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-muted/50 transition-colors"
+              >
+                <span className="h-8 w-8 rounded-full bg-secondary/20 flex items-center justify-center text-sm font-semibold text-secondary">
+                  {user.name.charAt(0).toUpperCase()}
+                </span>
+                <span className="hidden lg:inline text-foreground">{user.name}</span>
+                <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {menuOpen && (
+                <>
+                  <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
+                  <div className="absolute right-0 mt-2 w-56 z-20 bg-card border border-border rounded-lg shadow-lg py-1">
+                    <div className="px-4 py-3 border-b border-border/40">
+                      <p className="text-sm font-medium text-foreground">{user.name}</p>
+                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    >
+                      Dashboard
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                    >
+                      Sign Out
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 ml-3">
+              <Link
+                href="/login"
+                className="px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+              >
+                Get Started
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* Mobile Toggle */}
@@ -90,13 +152,49 @@ export default function Navbar() {
                 {l.label}
               </Link>
             ))}
-            <Link
-              href="/contact"
-              onClick={() => setOpen(false)}
-              className="mt-2 inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full text-center"
-            >
-              Get Started
-            </Link>
+            <div className="border-t border-border/40 mt-2 pt-3 flex flex-col gap-2">
+              {user ? (
+                <>
+                  <div className="px-3 py-1">
+                    <p className="text-sm font-medium text-foreground">{user.name}</p>
+                    <p className="text-xs text-muted-foreground">{user.email}</p>
+                  </div>
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleLogout();
+                      setOpen(false);
+                    }}
+                    className="w-full text-left rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/signup"
+                    onClick={() => setOpen(false)}
+                    className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full text-center"
+                  >
+                    Get Started
+                  </Link>
+                </>
+              )}
+            </div>
           </nav>
         </div>
       )}
