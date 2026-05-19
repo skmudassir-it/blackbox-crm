@@ -3,6 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import Icon from "@/components/ui/icon";
+import {
+  faBullseye,
+  faBolt,
+  faShieldHalved,
+  faHandshakeSimple,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const metadata: Metadata = {
   title: "About",
@@ -12,22 +20,22 @@ export const metadata: Metadata = {
 
 const values = [
   {
-    icon: "🎯",
+    icon: faBullseye,
     title: "Insurance-First",
     desc: "Built exclusively for insurance agents, not a generic CRM with insurance slapped on. Every feature solves a real insurance workflow problem.",
   },
   {
-    icon: "⚡",
+    icon: faBolt,
     title: "Simple by Design",
     desc: "We believe powerful tools should be easy to use. No bloated interfaces, no 50-step workflows. Just what you need, where you need it.",
   },
   {
-    icon: "🔒",
+    icon: faShieldHalved,
     title: "Trust & Security",
     desc: "Your clients' data is sacred. Bank-grade encryption, SOC 2 compliance, and a commitment to never sell or share your data — ever.",
   },
   {
-    icon: "🤝",
+    icon: faHandshakeSimple,
     title: "Customer Success",
     desc: "Your success is our success. We provide onboarding support, training resources, and responsive support to help you get the most out of Blackbox.",
   },
@@ -43,7 +51,7 @@ export default function AboutPage() {
             <Badge variant="secondary" className="mb-4 text-xs font-medium px-3 py-1">
               About Us
             </Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground mb-4">
               Built for Insurance Agents,{" "}
               <span className="text-secondary">by People Who Understand</span>
             </h1>
@@ -61,7 +69,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4">
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
                 Our Story
               </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
@@ -100,14 +108,14 @@ export default function AboutPage() {
       {/* Values */}
       <section className="bg-muted/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground text-center mb-12">
             What We Believe
           </h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
             {values.map((v) => (
-              <Card key={v.title} className="border-border/50 text-center">
+              <Card key={v.title} className="border-border/50 text-center hover:shadow-md transition-all group">
                 <CardContent className="pt-6">
-                  <span className="text-4xl mb-4 block">{v.icon}</span>
+                  <Icon icon={v.icon} size="2xl" className="text-secondary mb-4 group-hover:text-primary transition-colors" />
                   <h3 className="text-base font-semibold text-foreground mb-2">
                     {v.title}
                   </h3>
@@ -125,7 +133,7 @@ export default function AboutPage() {
       <section>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4">
+            <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
               Developed by Mudassir
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
@@ -134,7 +142,7 @@ export default function AboutPage() {
                 href="https://amsitservices.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary hover:underline font-medium"
+                className="text-secondary hover:underline font-semibold"
               >
                 AMS IT Services
               </a>
@@ -150,9 +158,9 @@ export default function AboutPage() {
             </p>
             <Link
               href="/contact"
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all"
             >
-              Get in Touch
+              Get in Touch <Icon icon={faArrowRight} />
             </Link>
           </div>
         </div>

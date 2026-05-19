@@ -2,12 +2,21 @@ import Image from "next/image";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import Icon from "@/components/ui/icon";
+import {
+  faUsers,
+  faClipboardCheck,
+  faChartBar,
+  faRobot,
+  faStar,
+  faArrowRight,
+} from "@fortawesome/free-solid-svg-icons";
 
 const highlights = [
-  { icon: "👥", title: "Client Profiles", desc: "Complete client info in one place." },
-  { icon: "📋", title: "Policy Tracking", desc: "Never miss a renewal date." },
-  { icon: "📊", title: "Commissions", desc: "Track every dollar earned." },
-  { icon: "🤖", title: "AI Insights", desc: "Smart cross-sell recommendations." },
+  { icon: faUsers, title: "Client Profiles", desc: "Complete client info in one place." },
+  { icon: faClipboardCheck, title: "Policy Tracking", desc: "Never miss a renewal date." },
+  { icon: faChartBar, title: "Commissions", desc: "Track every dollar earned." },
+  { icon: faRobot, title: "AI Insights", desc: "Smart cross-sell recommendations." },
 ];
 
 const testimonials = [
@@ -40,9 +49,9 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <div className="flex flex-col gap-6">
               <Badge variant="secondary" className="w-fit text-xs font-medium px-3 py-1">
-                🚀 Now in Public Beta
+                <Icon icon={faRobot} className="mr-1.5 text-primary" /> Now in Public Beta
               </Badge>
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-foreground leading-[1.1]">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.1]">
                 Your Clients,{" "}
                 <span className="text-primary">Organized</span>.
                 Your Business,{" "}
@@ -56,13 +65,13 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-3 pt-2">
                 <Link
                   href="/contact"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 shadow-sm transition-all"
                 >
-                  Start Free Trial
+                  Start Free Trial <Icon icon={faArrowRight} />
                 </Link>
                 <Link
                   href="/features"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold border border-input bg-background hover:bg-accent hover:text-accent-foreground h-11 px-8 transition-all"
                 >
                   See Features
                 </Link>
@@ -90,7 +99,7 @@ export default function HomePage() {
       <section className="bg-muted/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center max-w-2xl mx-auto mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Everything You Need to Run Your Agency
             </h2>
             <p className="text-lg text-muted-foreground">
@@ -100,10 +109,10 @@ export default function HomePage() {
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {highlights.map((f) => (
-              <Card key={f.title} className="border-border/50 hover:border-secondary/50 transition-colors">
+              <Card key={f.title} className="border-border/50 hover:border-secondary/50 hover:shadow-md transition-all group">
                 <CardHeader>
-                  <span className="text-3xl mb-2 block">{f.icon}</span>
-                  <CardTitle className="text-base">{f.title}</CardTitle>
+                  <Icon icon={f.icon} size="2xl" className="text-secondary mb-2 group-hover:text-primary transition-colors" />
+                  <CardTitle className="text-base font-semibold">{f.title}</CardTitle>
                   <CardDescription className="text-sm">{f.desc}</CardDescription>
                 </CardHeader>
               </Card>
@@ -112,9 +121,9 @@ export default function HomePage() {
           <div className="text-center mt-10">
             <Link
               href="/features"
-              className="inline-flex items-center gap-1 text-sm font-medium text-secondary hover:text-secondary/80 transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors"
             >
-              View all features <span aria-hidden="true">→</span>
+              View all features <Icon icon={faArrowRight} />
             </Link>
           </div>
         </div>
@@ -127,19 +136,17 @@ export default function HomePage() {
             <p className="text-sm font-semibold text-secondary uppercase tracking-wider mb-3">
               Testimonials
             </p>
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Trusted by Insurance Professionals
             </h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {testimonials.map((t) => (
-              <Card key={t.name} className="border-border/50">
+              <Card key={t.name} className="border-border/50 hover:shadow-md transition-all">
                 <CardHeader>
-                  <div className="flex gap-1 mb-3">
+                  <div className="flex gap-0.5 mb-3">
                     {[...Array(5)].map((_, i) => (
-                      <svg key={i} className="h-4 w-4 text-accent" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
+                      <Icon key={i} icon={faStar} className="text-accent w-4 h-4" size="sm" />
                     ))}
                   </div>
                   <blockquote className="text-sm text-foreground leading-relaxed mb-3">
@@ -162,7 +169,7 @@ export default function HomePage() {
         </div>
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 sm:py-28">
           <div className="max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl sm:text-4xl font-bold tracking-tight text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">
               Ready to Transform Your Agency?
             </h2>
             <p className="text-lg text-white/80 mb-8 leading-relaxed">
@@ -172,13 +179,13 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-white text-primary hover:bg-white/90 h-11 px-8"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-white text-primary hover:bg-white/90 h-11 px-8 transition-all"
               >
-                Start Free Trial
+                Start Free Trial <Icon icon={faArrowRight} />
               </Link>
               <Link
                 href="/features"
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-white/30 text-white hover:bg-white/10 h-11 px-8"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold border border-white/30 text-white hover:bg-white/10 h-11 px-8 transition-all"
               >
                 Learn More
               </Link>

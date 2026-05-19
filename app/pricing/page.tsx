@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import Icon from "@/components/ui/icon";
+import { faCheck, faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -101,7 +103,7 @@ export default function PricingPage() {
             <Badge variant="secondary" className="mb-4 text-xs font-medium px-3 py-1">
               Simple Pricing
             </Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground mb-4">
               Plans That Scale With{" "}
               <span className="text-secondary">Your Agency</span>
             </h1>
@@ -132,13 +134,13 @@ export default function PricingPage() {
                   </Badge>
                 )}
                 <div>
-                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                  <h3 className="text-xl font-extrabold text-foreground">{plan.name}</h3>
                   <p className="text-sm text-muted-foreground mt-1">
                     {plan.description}
                   </p>
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-4xl font-extrabold text-foreground">
                     ${plan.price}
                   </span>
                   <span className="text-muted-foreground">/month</span>
@@ -155,28 +157,16 @@ export default function PricingPage() {
                 <ul className="space-y-2.5 flex-1">
                   {plan.features.map((f) => (
                     <li key={f} className="flex items-start gap-2.5 text-sm">
-                      <svg
-                        className="h-5 w-5 text-secondary shrink-0 mt-0.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Icon icon={faCheck} className="text-secondary shrink-0 mt-0.5" />
                       {f}
                     </li>
                   ))}
                 </ul>
                 <Link
                   href="/contact"
-                  className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium h-11 px-8 w-full text-center ${
+                  className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold h-11 px-8 w-full text-center transition-all ${
                     plan.popular
-                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
                       : "border border-input bg-background hover:bg-accent hover:text-accent-foreground"
                   }`}
                 >
@@ -191,12 +181,12 @@ export default function PricingPage() {
       {/* FAQ */}
       <section className="bg-muted/50">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-20">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground text-center mb-12">
             Frequently Asked Questions
           </h2>
           <div className="space-y-6">
             {faqs.map((faq) => (
-              <div key={faq.q} className="border border-border/40 rounded-xl p-6">
+              <div key={faq.q} className="border border-border/40 rounded-xl p-6 hover:border-secondary/40 transition-colors">
                 <h3 className="text-base font-semibold text-foreground mb-2">
                   {faq.q}
                 </h3>
@@ -212,7 +202,7 @@ export default function PricingPage() {
       {/* Bottom CTA */}
       <section>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground mb-4">
             Still have questions?
           </h2>
           <p className="text-muted-foreground mb-6">
@@ -220,9 +210,9 @@ export default function PricingPage() {
           </p>
           <Link
             href="/contact"
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8"
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all"
           >
-            Contact Sales
+            Contact Sales <Icon icon={faArrowRight} />
           </Link>
         </div>
       </section>

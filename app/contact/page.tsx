@@ -2,6 +2,12 @@ import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
+import Icon from "@/components/ui/icon";
+import {
+  faEnvelope,
+  faRocket,
+  faVideo,
+} from "@fortawesome/free-solid-svg-icons";
 
 export const metadata: Metadata = {
   title: "Contact",
@@ -19,7 +25,7 @@ export default function ContactPage() {
             <Badge variant="secondary" className="mb-4 text-xs font-medium px-3 py-1">
               Get Started
             </Badge>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground mb-4">
+            <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-foreground mb-4">
               Let&apos;s{" "}
               <span className="text-secondary">Talk</span>
             </h1>
@@ -37,9 +43,9 @@ export default function ContactPage() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Email */}
-            <Card className="border-border/50 hover:border-secondary/50 transition-colors text-center">
+            <Card className="border-border/50 hover:border-secondary/50 transition-all text-center group">
               <CardContent className="pt-8 pb-6">
-                <span className="text-4xl mb-4 block">📧</span>
+                <Icon icon={faEnvelope} size="2xl" className="text-primary mb-4 group-hover:text-secondary transition-colors" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Email Us
                 </h3>
@@ -48,7 +54,7 @@ export default function ContactPage() {
                 </p>
                 <a
                   href="mailto:hello@amsitservices.com"
-                  className="text-sm font-medium text-secondary hover:text-secondary/80 transition-colors"
+                  className="text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors"
                 >
                   hello@amsitservices.com
                 </a>
@@ -56,9 +62,9 @@ export default function ContactPage() {
             </Card>
 
             {/* Trial */}
-            <Card className="border-secondary bg-secondary/5 text-center shadow-lg shadow-secondary/10">
+            <Card className="border-secondary bg-secondary/5 text-center shadow-lg shadow-secondary/10 group">
               <CardContent className="pt-8 pb-6">
-                <span className="text-4xl mb-4 block">🚀</span>
+                <Icon icon={faRocket} size="2xl" className="text-secondary mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Start Free Trial
                 </h3>
@@ -67,7 +73,7 @@ export default function ContactPage() {
                 </p>
                 <a
                   href="mailto:hello@amsitservices.com?subject=Blackbox%20CRM%20-%20Start%20Free%20Trial"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 w-full"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-6 w-full transition-all"
                 >
                   Start Trial
                 </a>
@@ -75,9 +81,9 @@ export default function ContactPage() {
             </Card>
 
             {/* Demo */}
-            <Card className="border-border/50 hover:border-secondary/50 transition-colors text-center">
+            <Card className="border-border/50 hover:border-secondary/50 transition-all text-center group">
               <CardContent className="pt-8 pb-6">
-                <span className="text-4xl mb-4 block">🎥</span>
+                <Icon icon={faVideo} size="2xl" className="text-primary mb-4 group-hover:text-secondary transition-colors" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">
                   Request a Demo
                 </h3>
@@ -86,7 +92,7 @@ export default function ContactPage() {
                 </p>
                 <a
                   href="mailto:hello@amsitservices.com?subject=Blackbox%20CRM%20-%20Request%20Demo"
-                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 w-full"
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-6 w-full transition-all"
                 >
                   Book Demo
                 </a>
@@ -99,8 +105,8 @@ export default function ContactPage() {
       {/* Contact Form */}
       <section className="bg-muted/50">
         <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8 py-20">
-          <div className="bg-card rounded-2xl border border-border/50 p-8 sm:p-10">
-            <h2 className="text-2xl font-bold tracking-tight text-foreground mb-2">
+          <div className="bg-card rounded-2xl border border-border/50 p-8 sm:p-10 shadow-sm">
+            <h2 className="text-2xl font-extrabold tracking-tight text-foreground mb-2">
               Send Us a Message
             </h2>
             <p className="text-sm text-muted-foreground mb-8">
@@ -205,18 +211,18 @@ export default function ContactPage() {
 
               <button
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-colors"
+                className="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-11 px-8 transition-all"
               >
                 Send Message
               </button>
 
               <p className="text-xs text-muted-foreground text-center">
                 By submitting, you agree to our{" "}
-                <Link href="#" className="text-secondary hover:underline">
+                <Link href="#" className="text-secondary hover:underline font-medium">
                   Privacy Policy
                 </Link>{" "}
                 and{" "}
-                <Link href="#" className="text-secondary hover:underline">
+                <Link href="#" className="text-secondary hover:underline font-medium">
                   Terms of Service
                 </Link>
                 .
@@ -233,7 +239,7 @@ export default function ContactPage() {
             Prefer to reach out directly?{" "}
             <a
               href="mailto:hello@amsitservices.com"
-              className="text-secondary hover:underline font-medium"
+              className="text-secondary hover:underline font-semibold"
             >
               hello@amsitservices.com
             </a>

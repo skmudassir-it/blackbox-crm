@@ -5,6 +5,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/auth-store";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars, faXmark, faChevronDown } from "@fortawesome/free-solid-svg-icons";
 
 const navLinks = [
   { label: "Features", href: "/features" },
@@ -39,7 +41,7 @@ export default function Navbar() {
             height={36}
             className="rounded-lg"
           />
-          <span className="text-xl font-bold tracking-tight text-primary">
+          <span className="text-xl font-extrabold tracking-tight text-primary">
             Blackbox<span className="text-secondary">CRM</span>
           </span>
         </Link>
@@ -71,9 +73,7 @@ export default function Navbar() {
                   {user.name.charAt(0).toUpperCase()}
                 </span>
                 <span className="hidden lg:inline text-foreground">{user.name}</span>
-                <svg className="h-4 w-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
+                <FontAwesomeIcon icon={faChevronDown} className="h-3 w-3 text-muted-foreground" />
               </button>
               {menuOpen && (
                 <>
@@ -86,13 +86,13 @@ export default function Navbar() {
                     <Link
                       href="/dashboard"
                       onClick={() => setMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      className="block px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
                     >
                       Dashboard
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                      className="w-full text-left px-4 py-2 text-sm text-muted-foreground hover:bg-muted/50 hover:text-foreground transition-colors"
                     >
                       Sign Out
                     </button>
@@ -110,7 +110,7 @@ export default function Navbar() {
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2 transition-all"
               >
                 Get Started
               </Link>
@@ -124,13 +124,7 @@ export default function Navbar() {
           onClick={() => setOpen(!open)}
           aria-label="Toggle menu"
         >
-          <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            {open ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
+          <FontAwesomeIcon icon={open ? faXmark : faBars} className="h-5 w-5" />
         </button>
       </div>
 
@@ -162,7 +156,7 @@ export default function Navbar() {
                   <Link
                     href="/dashboard"
                     onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     Dashboard
                   </Link>
@@ -171,7 +165,7 @@ export default function Navbar() {
                       handleLogout();
                       setOpen(false);
                     }}
-                    className="w-full text-left rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="w-full text-left rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     Sign Out
                   </button>
@@ -181,14 +175,14 @@ export default function Navbar() {
                   <Link
                     href="/login"
                     onClick={() => setOpen(false)}
-                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+                    className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/signup"
                     onClick={() => setOpen(false)}
-                    className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full text-center"
+                    className="inline-flex items-center justify-center gap-2 rounded-md text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full text-center transition-all"
                   >
                     Get Started
                   </Link>

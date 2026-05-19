@@ -1,5 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
+import Icon from "@/components/ui/icon";
+import { faHeart } from "@fortawesome/free-solid-svg-icons";
+import { faGithub, faLinkedin, faXTwitter } from "@fortawesome/free-brands-svg-icons";
 
 const footerLinks = {
   Product: [
@@ -36,23 +39,52 @@ export default function Footer() {
                 height={32}
                 className="rounded-lg"
               />
-              <span className="text-lg font-bold tracking-tight text-primary">
+              <span className="text-lg font-extrabold tracking-tight text-primary">
                 Blackbox<span className="text-secondary">CRM</span>
               </span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Intelligent client management for insurance professionals. Built
-              with ❤️ by{" "}
+              with <Icon icon={faHeart} className="text-red-500" /> by{" "}
               <a
                 href="https://amsitservices.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-secondary hover:underline"
+                className="text-secondary hover:underline font-medium"
               >
                 AMS IT Services
               </a>
               .
             </p>
+            <div className="flex items-center gap-3 mt-4">
+              <a
+                href="https://github.com/skmudassir-it"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="GitHub"
+              >
+                <Icon icon={faGithub} className="w-4 h-4" />
+              </a>
+              <a
+                href="https://linkedin.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="LinkedIn"
+              >
+                <Icon icon={faLinkedin} className="w-4 h-4" />
+              </a>
+              <a
+                href="https://x.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="X (Twitter)"
+              >
+                <Icon icon={faXTwitter} className="w-4 h-4" />
+              </a>
+            </div>
           </div>
 
           {/* Link columns */}
@@ -88,7 +120,7 @@ export default function Footer() {
               href="https://amsitservices.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-secondary hover:underline"
+              className="text-secondary hover:underline font-medium"
             >
               amsitservices.com
             </a>
