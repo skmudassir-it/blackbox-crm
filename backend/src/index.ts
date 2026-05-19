@@ -3,6 +3,11 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { connectDB } from "./config/database";
 import authRoutes from "./routes/auth";
+import clientsRoutes from "./routes/clients";
+import todosRoutes from "./routes/todos";
+import documentsRoutes from "./routes/documents";
+import appointmentsRoutes from "./routes/appointments";
+import dashboardRoutes from "./routes/dashboard";
 
 dotenv.config();
 
@@ -23,8 +28,15 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// Routes
+// Routes — Authentication
 app.use("/api/auth", authRoutes);
+
+// Routes — CRM modules
+app.use("/api/clients", clientsRoutes);
+app.use("/api/todos", todosRoutes);
+app.use("/api/documents", documentsRoutes);
+app.use("/api/appointments", appointmentsRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Start server
 async function start() {
