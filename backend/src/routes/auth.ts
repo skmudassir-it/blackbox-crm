@@ -115,6 +115,68 @@ router.get(
   }
 );
 
+// PUT /api/auth/profile — update user details
+router.put(
+  "/profile",
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req.user as AuthPayload).userId;
+      const { name, agency, currentPassword, newPassword } = req.body;
+
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      // Update name
+      if (name !== undefined) {
+        if (!name.trim()) {
+          res.status(400).json({ error: "Name cannot be empty" });
+          return;
+        }
+        user.name = name.trim();
+      }
+
+      // Update agency
+      if (agency !== undefined) {
+        user.agency = agency.trim();
+      }
+
+      // Update password (requires current password verification)
+      if (newPassword) {
+        if (!currentPassword) {
+          res.status(400).json({ error: "Current password is required to set a new password" });
+          return;
+        }
+        const isMatch = await user.comparePassword(currentPassword);
+        if (!isMatch) {
+          res.status(401).json({ error: "Current password is incorrect" });
+          return;
+        }
+        if (newPassword.length < 6) {
+          res.status(400).json({ error: "New password must be at least 6 characters" });
+          return;
+        }
+        user.password = newPassword;
+      }
+
+      await user.save();
+
+      res.json({
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        agency: user.agency,
+      });
+    } catch (err: any) {
+      console.error("Profile update error:", err);
+      res.status(500).json({ error: "Failed to update profile" });
+    }
+  }
+);
+
 // POST /api/auth/logout — client-side (stateless JWT)
 router.post(
   "/logout",

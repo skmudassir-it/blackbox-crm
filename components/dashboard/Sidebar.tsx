@@ -14,6 +14,7 @@ import {
   faBars,
   faXmark,
   faBox,
+  faCog,
 } from "@fortawesome/free-solid-svg-icons";
 
 const navItems = [
@@ -94,8 +95,20 @@ export default function Sidebar() {
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-border/50">
-          <p className="text-xs text-muted-foreground">
+        <div className="px-4 py-3 border-t border-border/50 space-y-2">
+          <Link
+            href="/dashboard/settings"
+            onClick={() => setCollapsed(true)}
+            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              pathname === "/dashboard/settings"
+                ? "bg-primary/10 text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <FontAwesomeIcon icon={faCog} className="h-4 w-4 shrink-0" />
+            Settings
+          </Link>
+          <p className="text-xs text-muted-foreground px-3">
             Blackbox CRM v1.0
           </p>
         </div>

@@ -18,6 +18,7 @@ const pageTitles: Record<string, string> = {
   "/dashboard/calendar": "Calendar",
   "/dashboard/todos": "To-Do",
   "/dashboard/dictionary": "Dictionary",
+  "/dashboard/settings": "Settings",
 };
 
 export default function DashboardLayout({
