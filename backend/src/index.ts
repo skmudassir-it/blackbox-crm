@@ -9,6 +9,9 @@ import documentsRoutes from "./routes/documents";
 import appointmentsRoutes from "./routes/appointments";
 import dashboardRoutes from "./routes/dashboard";
 import gmailRoutes from "./routes/gmail";
+import uploadRoutes from "./routes/upload";
+import subscriptionRoutes from "./routes/subscription";
+import smtpRoutes from "./routes/smtp";
 
 dotenv.config();
 
@@ -48,6 +51,9 @@ app.use("/api/documents", documentsRoutes);
 app.use("/api/appointments", appointmentsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/gmail", gmailRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/smtp", smtpRoutes);
 
 // Start server
 async function start() {

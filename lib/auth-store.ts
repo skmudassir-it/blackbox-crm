@@ -8,6 +8,14 @@ interface User {
   email: string;
   name: string;
   agency?: string;
+  profilePicture?: string;
+  subscription?: {
+    plan: string;
+    status: "active" | "inactive" | "trial" | "expired";
+    startDate?: string;
+    expiryDate?: string;
+    customerId?: string;
+  };
 }
 
 interface AuthState {

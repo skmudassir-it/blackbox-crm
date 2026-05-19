@@ -50,4 +50,21 @@ export const api = {
     request<T>(endpoint, { method: "PATCH", body: JSON.stringify(body) }),
   delete: <T = any>(endpoint: string) =>
     request<T>(endpoint, { method: "DELETE" }),
+  upload: async <T = any>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> => {
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    try {
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) return { ok: false, error: data.error || "Upload failed" };
+      return { ok: true, data };
+    } catch (err: any) {
+      return { ok: false, error: err.message || "Network error" };
+    }
+  },
 };

@@ -8,8 +8,9 @@ import {
   faEnvelope, faInbox, faSearch, faPlus, faPaperPlane,
   faArrowLeft, faTrash, faSync, faCheck, faTimes,
   faPaperclip, faExclamationTriangle, faChevronLeft, faChevronRight,
+  faPlug, faCog, faServer, faShieldHalved, faEye, faEyeSlash,
 } from "@fortawesome/free-solid-svg-icons";
-import { faGoogle } from "@fortawesome/free-brands-svg-icons";
+import { faGoogle, faMicrosoft } from "@fortawesome/free-brands-svg-icons";
 
 interface EmailMessage {
   id: string; threadId: string; from: string; subject: string;
@@ -35,6 +36,14 @@ export default function MessagesPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<"gmail" | "outlook" | "smtp">("gmail");
+  // SMTP state
+  const [smtpForm, setSmtpForm] = useState({ host: "", port: "587", user: "", pass: "", secure: "true" });
+  const [smtpTesting, setSmtpTesting] = useState(false);
+  const [smtpResult, setSmtpResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [showSmtpPass, setShowSmtpPass] = useState(false);
+  // Outlook state
+  const [outlookStatus, setOutlookStatus] = useState<{ connected: boolean; email?: string }>({ connected: false });
 
   // Check connection status
   const checkStatus = useCallback(async () => {
@@ -154,28 +163,168 @@ export default function MessagesPage() {
       )}
 
       {!status?.connected ? (
-        /* Not connected — show connect prompt */
+        /* Not connected — show provider selection */
         <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-foreground">Email</h2>
-          <div className="bg-card rounded-2xl border border-border/50 p-8 text-center max-w-lg mx-auto">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#EA433515" }}>
-              <FontAwesomeIcon icon={faGoogle} className="h-8 w-8" style={{ color: "#EA4335" }} />
-            </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Connect Your Gmail</h3>
-            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              Link your Gmail account to read, reply, and send emails directly from Blackbox CRM.
-              Your credentials are secure — we use Google OAuth with read-only + send permissions.
-            </p>
-            <button onClick={startOAuth}
-              className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white h-11 px-6 transition-all hover:opacity-90"
-              style={{ backgroundColor: "#EA4335" }}>
-              <FontAwesomeIcon icon={faGoogle} className="h-4 w-4" />
-              Connect Gmail
-            </button>
-            <p className="text-xs text-muted-foreground mt-4">
-              You'll be redirected to Google to authorize access
-            </p>
+          <h2 className="text-lg font-semibold text-foreground">Email Providers</h2>
+
+          {/* Tab selector */}
+          <div className="flex gap-1 bg-muted/50 rounded-xl p-1 w-fit">
+            {(["gmail", "outlook", "smtp"] as const).map((tab) => (
+              <button key={tab} onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  activeTab === tab ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}>
+                {tab === "gmail" ? "Gmail" : tab === "outlook" ? "Outlook" : "SMTP"}
+              </button>
+            ))}
           </div>
+
+          {/* Gmail Card */}
+          {activeTab === "gmail" && (
+            <div className="bg-card rounded-2xl border border-border/50 p-8 text-center max-w-lg">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#EA433515" }}>
+                <FontAwesomeIcon icon={faGoogle} className="h-8 w-8" style={{ color: "#EA4335" }} />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Connect Your Gmail</h3>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Link your Gmail account to read, reply, and send emails directly from Blackbox CRM.
+                Your credentials are secure — we use Google OAuth with read-only + send permissions.
+              </p>
+              <button onClick={startOAuth}
+                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white h-11 px-6 transition-all hover:opacity-90"
+                style={{ backgroundColor: "#EA4335" }}>
+                <FontAwesomeIcon icon={faGoogle} className="h-4 w-4" />
+                Connect Gmail
+              </button>
+              <p className="text-xs text-muted-foreground mt-4">
+                You'll be redirected to Google to authorize access. <br />
+                <span className="text-amber-600">Requires Google Cloud Console setup — see guide below.</span>
+              </p>
+            </div>
+          )}
+
+          {/* Outlook Card */}
+          {activeTab === "outlook" && (
+            <div className="bg-card rounded-2xl border border-border/50 p-8 text-center max-w-lg">
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: "#0078D415" }}>
+                <FontAwesomeIcon icon={faMicrosoft} className="h-8 w-8" style={{ color: "#0078D4" }} />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Connect Outlook / Microsoft 365</h3>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                Connect your Outlook or Microsoft 365 work account to sync emails.
+                Uses Microsoft Graph API with mail.read + mail.send permissions.
+              </p>
+              <button onClick={() => setSuccess("Outlook integration coming soon — Microsoft Graph API setup guide in progress.")}
+                className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold text-white h-11 px-6 transition-all hover:opacity-90"
+                style={{ backgroundColor: "#0078D4" }}>
+                <FontAwesomeIcon icon={faMicrosoft} className="h-4 w-4" />
+                Connect Outlook
+              </button>
+              <p className="text-xs text-muted-foreground mt-4">
+                Microsoft Graph API integration — available in next update
+              </p>
+            </div>
+          )}
+
+          {/* SMTP Card */}
+          {activeTab === "smtp" && (
+            <div className="bg-card rounded-2xl border border-border/50 p-6 max-w-lg">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: "#6366f115" }}>
+                  <FontAwesomeIcon icon={faServer} className="h-5 w-5" style={{ color: "#6366f1" }} />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Custom SMTP Server</h3>
+                  <p className="text-xs text-muted-foreground">Use any email provider via SMTP</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">SMTP Host</label>
+                  <input value={smtpForm.host} onChange={(e) => setSmtpForm({ ...smtpForm, host: e.target.value })}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="smtp.gmail.com" />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-foreground mb-1">Port</label>
+                    <select value={smtpForm.port} onChange={(e) => setSmtpForm({ ...smtpForm, port: e.target.value })}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                      <option value="587">587 (TLS)</option>
+                      <option value="465">465 (SSL)</option>
+                      <option value="25">25</option>
+                      <option value="2525">2525</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-foreground mb-1">Security</label>
+                    <select value={smtpForm.secure} onChange={(e) => setSmtpForm({ ...smtpForm, secure: e.target.value })}
+                      className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                      <option value="true">STARTTLS</option>
+                      <option value="ssl">SSL/TLS</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Username / Email</label>
+                  <input value={smtpForm.user} onChange={(e) => setSmtpForm({ ...smtpForm, user: e.target.value })}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    placeholder="you@gmail.com" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1">Password / App Password</label>
+                  <div className="relative">
+                    <input type={showSmtpPass ? "text" : "password"} value={smtpForm.pass}
+                      onChange={(e) => setSmtpForm({ ...smtpForm, pass: e.target.value })}
+                      className="w-full rounded-lg border border-input bg-background pl-3 pr-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                      placeholder="App-specific password" />
+                    <button onClick={() => setShowSmtpPass(!showSmtpPass)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground">
+                      <FontAwesomeIcon icon={showSmtpPass ? faEyeSlash : faEye} className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {smtpResult && (
+                <div className={`mt-4 p-3 rounded-lg text-xs flex items-center gap-2 ${
+                  smtpResult.ok ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-700 border border-red-200"
+                }`}>
+                  <FontAwesomeIcon icon={smtpResult.ok ? faCheck : faTimes} className="h-3 w-3 shrink-0" />
+                  {smtpResult.msg}
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-6">
+                <button onClick={async () => {
+                  setSmtpTesting(true); setSmtpResult(null);
+                  const res = await api.post<{ ok: boolean; msg: string }>("/api/smtp/test", smtpForm);
+                  setSmtpResult(res.ok && res.data ? res.data : { ok: false, msg: res.error || "Connection failed" });
+                  setSmtpTesting(false);
+                }} disabled={smtpTesting || !smtpForm.host || !smtpForm.user || !smtpForm.pass}
+                  className="inline-flex items-center gap-2 rounded-lg text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-5 transition-all disabled:opacity-50">
+                  <FontAwesomeIcon icon={smtpTesting ? faSync : faPlug} className={`h-3.5 w-3.5 ${smtpTesting ? "animate-spin" : ""}`} />
+                  {smtpTesting ? "Testing..." : "Test Connection"}
+                </button>
+                <button onClick={async () => {
+                  if (!smtpResult?.ok) { setError("Test connection first"); return; }
+                  const res = await api.post("/api/smtp/save", smtpForm);
+                  if (res.ok) setSuccess("SMTP configuration saved — outgoing email ready!");
+                  else setError(res.error || "Failed to save");
+                }} disabled={!smtpResult?.ok}
+                  className="inline-flex items-center gap-2 rounded-lg text-sm font-medium border border-input bg-background text-foreground hover:bg-muted h-10 px-5 transition-all disabled:opacity-40">
+                  <FontAwesomeIcon icon={faCog} className="h-3.5 w-3.5" />
+                  Save Config
+                </button>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
+                <FontAwesomeIcon icon={faShieldHalved} className="h-3 w-3" />
+                Credentials are encrypted at rest and never logged
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         /* Connected — show inbox */

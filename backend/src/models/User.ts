@@ -6,6 +6,14 @@ export interface IUser extends Document {
   password: string;
   name: string;
   agency?: string;
+  profilePicture?: string;
+  subscription?: {
+    plan: string;
+    status: "active" | "inactive" | "trial" | "expired";
+    startDate?: Date;
+    expiryDate?: Date;
+    customerId?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -33,6 +41,20 @@ const userSchema = new Schema<IUser>(
     agency: {
       type: String,
       trim: true,
+    },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
+    subscription: {
+      type: {
+        plan: { type: String, default: "free" },
+        status: { type: String, enum: ["active", "inactive", "trial", "expired"], default: "trial" },
+        startDate: { type: Date },
+        expiryDate: { type: Date },
+        customerId: { type: String },
+      },
+      default: { plan: "free", status: "trial" },
     },
   },
   {

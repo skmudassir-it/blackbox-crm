@@ -44,6 +44,8 @@ router.post("/register", async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         name: user.name,
         agency: user.agency,
+        profilePicture: user.profilePicture,
+        subscription: user.subscription,
       },
     });
   } catch (err: any) {
@@ -82,6 +84,8 @@ router.post("/login", async (req: Request, res: Response): Promise<void> => {
         email: user.email,
         name: user.name,
         agency: user.agency,
+        profilePicture: user.profilePicture,
+        subscription: user.subscription,
       },
     });
   } catch (err: any) {
@@ -107,6 +111,8 @@ router.get(
         email: user.email,
         name: user.name,
         agency: user.agency,
+        profilePicture: user.profilePicture,
+        subscription: user.subscription,
       });
     } catch (err: any) {
       console.error("Me error:", err);
@@ -169,6 +175,8 @@ router.put(
         email: user.email,
         name: user.name,
         agency: user.agency,
+        profilePicture: user.profilePicture,
+        subscription: user.subscription,
       });
     } catch (err: any) {
       console.error("Profile update error:", err);

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/lib/auth-store";
 import { api } from "@/lib/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUser, faBuilding, faLock, faEnvelope, faSave, faCheck } from "@fortawesome/free-solid-svg-icons";
+import {
+  faUser, faBuilding, faLock, faEnvelope, faSave, faCheck,
+  faCamera, faTrash, faCrown, faCircleCheck, faClock,
+  faCalendarCheck, faCreditCard, faArrowUpRightFromSquare,
+} from "@fortawesome/free-solid-svg-icons";
 
 export default function SettingsPage() {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   const [name, setName] = useState("");
   const [agency, setAgency] = useState("");
@@ -18,10 +23,15 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
+  // Profile picture
+  const [uploading, setUploading] = useState(false);
+  const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+
   useEffect(() => {
     if (user) {
       setName(user.name || "");
       setAgency(user.agency || "");
+      setProfilePicPreview(user.profilePicture || null);
     }
   }, [user]);
 
@@ -54,6 +64,46 @@ export default function SettingsPage() {
     setSaving(false);
   }
 
+  async function handleProfilePicUpload(file: File) {
+    if (!file) return;
+    setUploading(true);
+    setMessage(null);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await api.upload<{ url: string }>("/api/upload/profile-picture", formData);
+    if (res.ok && res.data) {
+      setProfilePicPreview(res.data.url);
+      if (user) setUser({ ...user, profilePicture: res.data.url });
+      setMessage({ type: "success", text: "Profile picture updated!" });
+    } else {
+      setMessage({ type: "error", text: res.error || "Upload failed" });
+    }
+    setUploading(false);
+  }
+
+  async function handleRemoveProfilePic() {
+    setUploading(true);
+    const res = await api.delete("/api/upload/profile-picture");
+    if (res.ok) {
+      setProfilePicPreview(null);
+      if (user) setUser({ ...user, profilePicture: undefined });
+      setMessage({ type: "success", text: "Profile picture removed" });
+    } else {
+      setMessage({ type: "error", text: res.error || "Failed to remove" });
+    }
+    setUploading(false);
+  }
+
+  const subscription = user?.subscription;
+  const planName = subscription?.plan === "pro" ? "Professional" : subscription?.plan === "free" ? "Free" : "Trial";
+  const statusColor = subscription?.status === "active"
+    ? "text-emerald-600 bg-emerald-50"
+    : subscription?.status === "trial"
+    ? "text-amber-600 bg-amber-50"
+    : "text-muted-foreground bg-muted";
+
   return (
     <div className="max-w-2xl space-y-6">
       {message && (
@@ -64,6 +114,150 @@ export default function SettingsPage() {
           {message.text}
         </div>
       )}
+
+      {/* Profile Picture Section */}
+      <div className="bg-card rounded-2xl border border-border/50 p-6">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-6">
+          <FontAwesomeIcon icon={faCamera} className="text-secondary h-4 w-4" /> Profile Picture
+        </h3>
+        <div className="flex items-center gap-6">
+          <div className="relative group">
+            <div className="w-24 h-24 rounded-2xl overflow-hidden bg-muted border-2 border-border/50 flex items-center justify-center">
+              {profilePicPreview ? (
+                <img src={profilePicPreview} alt="Profile" className="w-full h-full object-cover" />
+              ) : (
+                <FontAwesomeIcon icon={faUser} className="h-10 w-10 text-muted-foreground/40" />
+              )}
+            </div>
+            {/* Upload overlay */}
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="absolute inset-0 rounded-2xl bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+            >
+              <FontAwesomeIcon icon={uploading ? faClock : faCamera} className="h-5 w-5 text-white" />
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleProfilePicUpload(file);
+                e.target.value = "";
+              }}
+            />
+          </div>
+          <div className="space-y-2">
+            <p className="text-sm text-foreground font-medium">
+              {uploading ? "Uploading..." : "Upload a profile photo"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              JPEG, PNG, WebP, or GIF — max 5 MB
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading}
+                className="inline-flex items-center gap-1.5 rounded-lg text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-8 px-3 transition-all disabled:opacity-50"
+              >
+                <FontAwesomeIcon icon={faCamera} className="h-3 w-3" />
+                {profilePicPreview ? "Change" : "Upload"}
+              </button>
+              {profilePicPreview && (
+                <button
+                  onClick={handleRemoveProfilePic}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-1.5 rounded-lg text-xs font-medium border border-input bg-background text-foreground hover:bg-muted h-8 px-3 transition-all disabled:opacity-50"
+                >
+                  <FontAwesomeIcon icon={faTrash} className="h-3 w-3" />
+                  Remove
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Subscription Section */}
+      <div className="bg-card rounded-2xl border border-border/50 p-6">
+        <h3 className="text-base font-semibold text-foreground flex items-center gap-2 mb-6">
+          <FontAwesomeIcon icon={faCrown} className="text-amber-500 h-4 w-4" /> Subscription
+        </h3>
+
+        <div className="space-y-4">
+          {/* Current plan badge */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                subscription?.status === "active" ? "bg-emerald-100" : "bg-amber-100"
+              }`}>
+                <FontAwesomeIcon
+                  icon={subscription?.status === "active" ? faCircleCheck : faClock}
+                  className={`h-5 w-5 ${subscription?.status === "active" ? "text-emerald-600" : "text-amber-600"}`}
+                />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">{planName} Plan</p>
+                <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full ${statusColor}`}>
+                  {subscription?.status || "trial"}
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              {subscription?.expiryDate && (
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <FontAwesomeIcon icon={faCalendarCheck} className="h-3 w-3" />
+                  Expires {new Date(subscription.expiryDate).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Payment gateway placeholder */}
+          <div className="border-2 border-dashed border-border/50 rounded-xl p-6 text-center space-y-3">
+            <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mx-auto">
+              <FontAwesomeIcon icon={faCreditCard} className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div>
+              <h4 className="text-sm font-semibold text-foreground">Payment Gateway</h4>
+              <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                Payment gateway integration is ready to be plugged in. 
+                When you have your gateway API (Stripe, Razorpay, etc.), 
+                we&apos;ll connect it here to enable paid plans.
+              </p>
+            </div>
+            <button
+              disabled
+              className="inline-flex items-center gap-2 rounded-lg text-xs font-medium border border-input bg-background text-muted-foreground h-9 px-4 opacity-50 cursor-not-allowed"
+            >
+              <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="h-3 w-3" />
+              Configure Payment Gateway
+            </button>
+          </div>
+
+          {/* Plan features */}
+          <div className="grid grid-cols-1 gap-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <FontAwesomeIcon icon={faCheck} className="h-3 w-3 text-emerald-500" />
+              API access for payment gateway
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <FontAwesomeIcon icon={faCheck} className="h-3 w-3 text-emerald-500" />
+              Subscription model ready (free / trial / pro)
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <FontAwesomeIcon icon={faCheck} className="h-3 w-3 text-emerald-500" />
+              Auto-expiry and status management built in
+            </div>
+            <div className="flex items-center gap-2 text-xs text-amber-600">
+              <FontAwesomeIcon icon={faClock} className="h-3 w-3" />
+              Awaiting payment gateway API credentials
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Profile Section */}
       <div className="bg-card rounded-2xl border border-border/50 p-6">
