@@ -29,7 +29,7 @@ export default function SignupPage() {
 
     const result = await signup(email, password, name, agency || undefined);
     if (result.ok) {
-      router.push("/");
+      router.push("/dashboard");
     } else {
       setError(result.error || "Registration failed");
     }
