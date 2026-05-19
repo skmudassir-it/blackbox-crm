@@ -3,16 +3,16 @@ import Link from "next/link";
 
 const footerLinks = {
   Product: [
-    { label: "Features", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "Testimonials", href: "#testimonials" },
-    { label: "Changelog", href: "#" },
+    { label: "Features", href: "/features" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "About", href: "/about" },
+    { label: "Contact", href: "/contact" },
   ],
   Company: [
-    { label: "About", href: "#" },
+    { label: "About Us", href: "/about" },
     { label: "Blog", href: "#" },
     { label: "Careers", href: "#" },
-    { label: "Contact", href: "mailto:hello@amsitservices.com" },
+    { label: "Support", href: "mailto:hello@amsitservices.com" },
   ],
   Legal: [
     { label: "Privacy Policy", href: "#" },
@@ -23,7 +23,7 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="border-t border-border/40 bg-muted/30">
+    <footer className="border-t border-border/40 bg-muted/30 mt-auto">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -64,12 +64,12 @@ export default function Footer() {
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.label}>
-                    <a
+                    <Link
                       href={link.href}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
