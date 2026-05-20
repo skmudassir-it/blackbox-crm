@@ -6,9 +6,9 @@ import { SentEmail } from "../models/SentEmail";
 import { Contact } from "../models/Contact";
 import { Client } from "../models/Client";
 import { Todo } from "../models/Todo";
-import { Document } from "../models/Document";
+import { DocumentModel } from "../models/Document";
 import { Appointment } from "../models/Appointment";
-import { Kanban } from "../models/Kanban";
+import { KanbanColumn } from "../models/Kanban";
 
 const router = Router();
 
@@ -236,9 +236,9 @@ router.delete(
         Contact.deleteMany({ userId }),
         Client.deleteMany({ userId }),
         Todo.deleteMany({ userId }),
-        Document.deleteMany({ userId }),
+        DocumentModel.deleteMany({ userId }),
         Appointment.deleteMany({ userId }),
-        Kanban.deleteMany({ userId }),
+        KanbanColumn.deleteMany({ userId }),
       ]);
 
       // Delete user last
