@@ -32,10 +32,15 @@ app.use(
       // Allow requests with no origin (curl, server-to-server, mobile apps)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      // Allow all nip.io subdomains and internal Docker requests
-      if (origin.endsWith(".nip.io") || origin.startsWith("http://blackbox-backend")) return callback(null, true);
-      console.log("CORS blocked origin:", origin, "allowed:", allowedOrigins);
-      callback(null, false); // Send 403 instead of crashing
+      // Allow nip.io, amsitservices.com subdomains, and internal Docker
+      if (
+        origin.endsWith(".nip.io") ||
+        origin.endsWith(".amsitservices.com") ||
+        origin.startsWith("http://blackbox-backend") ||
+        origin === "http://localhost:3000"
+      ) return callback(null, true);
+      console.log("CORS blocked origin:", origin);
+      callback(null, false);
     },
     credentials: true,
   })
