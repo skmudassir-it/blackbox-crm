@@ -32,7 +32,10 @@ app.use(
       // Allow requests with no origin (curl, server-to-server, mobile apps)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
-      callback(new Error("Not allowed by CORS"));
+      // Allow all nip.io subdomains and internal Docker requests
+      if (origin.endsWith(".nip.io") || origin.startsWith("http://blackbox-backend")) return callback(null, true);
+      console.log("CORS blocked origin:", origin, "allowed:", allowedOrigins);
+      callback(null, false); // Send 403 instead of crashing
     },
     credentials: true,
   })
