@@ -17,8 +17,10 @@ const pageTitles: Record<string, string> = {
   "/dashboard/messages": "Messages",
   "/dashboard/calendar": "Calendar",
   "/dashboard/todos": "To-Do",
+  "/dashboard/kanban": "Kanban",
   "/dashboard/dictionary": "Dictionary",
   "/dashboard/settings": "Settings",
+  "/dashboard/about": "About",
 };
 
 export default function DashboardLayout({
@@ -74,7 +76,7 @@ export default function DashboardLayout({
       {/* Main content */}
       <div className="lg:pl-64">
         {/* Top header bar */}
-        <header className="sticky top-0 z-20 h-16 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between px-6">
+        <header className="sticky top-0 z-20 h-16 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex items-center justify-between pl-14 lg:pl-6 pr-6">
           <h1 className="text-lg font-semibold text-foreground">{pageTitle}</h1>
 
           {/* User avatar dropdown */}

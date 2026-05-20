@@ -16,6 +16,7 @@ import {
   faBox,
   faCog,
   faColumns,
+  faCircleInfo,
 } from "@fortawesome/free-solid-svg-icons";
 
 const navItems = [
@@ -26,11 +27,12 @@ const navItems = [
   { label: "To-Do", href: "/dashboard/todos", icon: faCheckSquare },
   { label: "Kanban", href: "/dashboard/kanban", icon: faColumns },
   { label: "Dictionary", href: "/dashboard/dictionary", icon: faBook },
+  { label: "About", href: "/dashboard/about", icon: faCircleInfo },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true); // hidden on mobile by default
 
   return (
     <>
@@ -110,9 +112,6 @@ export default function Sidebar() {
             <FontAwesomeIcon icon={faCog} className="h-4 w-4 shrink-0" />
             Settings
           </Link>
-          <p className="text-xs text-muted-foreground px-3">
-            Blackbox CRM v1.0
-          </p>
         </div>
       </aside>
     </>
