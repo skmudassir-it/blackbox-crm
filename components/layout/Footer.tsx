@@ -18,8 +18,8 @@ const footerLinks = {
     { label: "Support", href: "mailto:hello@amsitservices.com" },
   ],
   Legal: [
-    { label: "Privacy Policy", href: "#" },
-    { label: "Terms of Service", href: "#" },
+    { label: "Privacy Policy", href: "/privacy" },
+    { label: "Terms of Service", href: "/terms" },
     { label: "Cookie Policy", href: "#" },
   ],
 };

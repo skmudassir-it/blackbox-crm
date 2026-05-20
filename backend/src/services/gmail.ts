@@ -10,11 +10,13 @@ function createOAuth2Client() {
 }
 
 /** Generate the Google OAuth URL */
-export function getAuthUrl(): string {
+export function getAuthUrl(userId: string): string {
   const oauth2Client = createOAuth2Client();
+  const state = Buffer.from(JSON.stringify({ userId })).toString("base64url");
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     prompt: "consent",
+    state,
     scope: [
       "https://www.googleapis.com/auth/gmail.readonly",
       "https://www.googleapis.com/auth/gmail.send",

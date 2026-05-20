@@ -4,25 +4,36 @@ import * as gmailService from "../services/gmail";
 
 const router = Router();
 
-// All routes require authentication
-router.use(authenticate);
+// Helper to extract userId from auth payload
+const uid = (req: Request): string => (req.user as AuthPayload).userId;
 
-/** GET /api/gmail/auth — start OAuth flow */
-router.get("/auth", (_req: Request, res: Response) => {
-  const url = gmailService.getAuthUrl();
+/** GET /api/gmail/auth — start OAuth flow (authenticated) */
+router.get("/auth", authenticate, (req: Request, res: Response) => {
+  const userId = uid(req);
+  const url = gmailService.getAuthUrl(userId);
   res.json({ url });
 });
 
-/** GET /api/gmail/callback — OAuth callback (exchanges code for tokens) */
+/** GET /api/gmail/callback — OAuth callback (NO auth — Google's redirect has no Bearer token) */
 router.get("/callback", async (req: Request, res: Response): Promise<void> => {
   try {
-    const { code } = req.query;
+    const { code, state } = req.query;
     if (!code || typeof code !== "string") {
       res.status(400).json({ error: "Missing authorization code" });
       return;
     }
+    if (!state || typeof state !== "string") {
+      res.status(400).json({ error: "Missing state parameter" });
+      return;
+    }
 
-    const userId = (req.user as AuthPayload).userId;
+    const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
+    const userId = decoded.userId;
+    if (!userId) {
+      res.status(400).json({ error: "Invalid state — no user" });
+      return;
+    }
+
     const { email } = await gmailService.exchangeCode(userId, code);
 
     // Redirect back to frontend messages page
@@ -36,9 +47,9 @@ router.get("/callback", async (req: Request, res: Response): Promise<void> => {
 });
 
 /** GET /api/gmail/status — check connection status */
-router.get("/status", async (req: Request, res: Response): Promise<void> => {
+router.get("/status", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     const status = await gmailService.getConnectionStatus(userId);
     res.json(status);
   } catch (err: any) {
@@ -47,9 +58,9 @@ router.get("/status", async (req: Request, res: Response): Promise<void> => {
 });
 
 /** DELETE /api/gmail/disconnect */
-router.delete("/disconnect", async (req: Request, res: Response): Promise<void> => {
+router.delete("/disconnect", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     await gmailService.disconnectGmail(userId);
     res.json({ message: "Gmail disconnected" });
   } catch (err: any) {
@@ -58,9 +69,9 @@ router.delete("/disconnect", async (req: Request, res: Response): Promise<void> 
 });
 
 /** GET /api/gmail/messages — list inbox */
-router.get("/messages", async (req: Request, res: Response): Promise<void> => {
+router.get("/messages", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     const { pageToken, max } = req.query;
     const result = await gmailService.listMessages(userId, max ? parseInt(max as string) : 20, pageToken as string | undefined);
     res.json(result);
@@ -75,9 +86,9 @@ router.get("/messages", async (req: Request, res: Response): Promise<void> => {
 });
 
 /** GET /api/gmail/messages/:id — read single message */
-router.get("/messages/:id", async (req: Request, res: Response): Promise<void> => {
+router.get("/messages/:id", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     const message = await gmailService.getMessage(userId, req.params.id);
     res.json(message);
   } catch (err: any) {
@@ -90,9 +101,9 @@ router.get("/messages/:id", async (req: Request, res: Response): Promise<void> =
 });
 
 /** POST /api/gmail/send — send email */
-router.post("/send", async (req: Request, res: Response): Promise<void> => {
+router.post("/send", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     const { to, subject, body, threadId } = req.body;
 
     if (!to || !subject || !body) {
@@ -113,9 +124,9 @@ router.post("/send", async (req: Request, res: Response): Promise<void> => {
 });
 
 /** GET /api/gmail/thread/:id — get all messages in a thread */
-router.get("/thread/:id", async (req: Request, res: Response): Promise<void> => {
+router.get("/thread/:id", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req.user as AuthPayload).userId;
+    const userId = uid(req);
     // For simplicity, just return the thread detail
     const gmailClient = await gmailService.listMessages(userId, 1); // get gmail client indirectly
     // Actually listMessages doesn't expose gmail client, let's redirect to first message

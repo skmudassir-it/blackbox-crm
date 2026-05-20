@@ -146,6 +146,15 @@ export default function SignupPage() {
               Sign in
             </Link>
           </p>
+
+          <div className="mt-4 pt-4 border-t border-border/40 text-center text-xs text-muted-foreground space-x-4">
+            <Link href="/privacy" className="hover:text-foreground transition-colors">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground transition-colors">
+              Terms of Service
+            </Link>
+          </div>
         </div>
       </div>
     </div>
