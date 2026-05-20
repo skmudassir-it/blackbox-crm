@@ -111,16 +111,28 @@ export default function SettingsPage() {
     setDeleting(true);
     setMessage(null);
 
-    const res = await api.delete<{ message: string }>("/api/auth/account", {
-      password: deletePassword,
-    });
+    try {
+      const token = useAuthStore.getState().token;
+      const res = await fetch("/api/auth/account", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: deletePassword }),
+      });
 
-    if (res.ok) {
-      // Sign out and redirect
-      useAuthStore.getState().logout();
-      window.location.href = "/login";
-    } else {
-      setMessage({ type: "error", text: res.error || "Failed to delete account" });
+      if (res.ok) {
+        // Sign out and redirect
+        useAuthStore.getState().logout();
+        window.location.href = "/login";
+      } else {
+        const data = await res.json();
+        setMessage({ type: "error", text: data.error || "Failed to delete account" });
+        setDeleting(false);
+      }
+    } catch {
+      setMessage({ type: "error", text: "Something went wrong" });
       setDeleting(false);
     }
   }
