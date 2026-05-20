@@ -123,6 +123,19 @@ router.post("/send", authenticate, async (req: Request, res: Response): Promise<
   }
 });
 
+/** GET /api/gmail/sent — list sent emails (from our DB) */
+router.get("/sent", authenticate, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = uid(req);
+    const skip = parseInt(req.query.skip as string) || 0;
+    const limit = parseInt(req.query.limit as string) || 50;
+    const result = await gmailService.getSentEmails(userId, limit, skip);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 /** GET /api/gmail/thread/:id — get all messages in a thread */
 router.get("/thread/:id", authenticate, async (req: Request, res: Response): Promise<void> => {
   try {

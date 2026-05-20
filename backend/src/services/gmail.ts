@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { GmailToken, IGmailToken } from "../models/GmailToken";
+import { SentEmail } from "../models/SentEmail";
 
 const OAUTH_CLIENT_ID = process.env.GMAIL_CLIENT_ID || "";
 const OAUTH_CLIENT_SECRET = process.env.GMAIL_CLIENT_SECRET || "";
@@ -155,7 +156,7 @@ export async function getMessage(userId: string, messageId: string) {
   return { id: messageId, threadId: res.data.threadId, from, to, subject, date, body, snippet: res.data.snippet || "" };
 }
 
-/** Send an email */
+/** Send an email — saves to DB + Gmail Sent folder */
 export async function sendEmail(userId: string, to: string, subject: string, body: string, threadId?: string) {
   const gmail = await getGmailClient(userId);
 
@@ -169,22 +170,81 @@ export async function sendEmail(userId: string, to: string, subject: string, bod
     requestBody: { raw, threadId },
   });
 
+  // Store in our database (sent folder)
+  const htmlBody = plainToHtml(body);
+  await SentEmail.create({
+    userId,
+    messageId: res.data.id!,
+    threadId: res.data.threadId || "",
+    from: fromEmail,
+    to,
+    subject,
+    body,
+    htmlBody,
+    sentAt: new Date(),
+  });
+
   return { id: res.data.id, threadId: res.data.threadId };
 }
 
-/** Build RFC 2822 email raw string */
-function makeEmailRaw(from: string, to: string, subject: string, body: string, inReplyTo?: string): string {
-  const lines: string[] = [];
-  lines.push(`From: ${from}`);
-  lines.push(`To: ${to}`);
-  lines.push(`Subject: ${subject}`);
-  lines.push("MIME-Version: 1.0");
-  lines.push('Content-Type: text/plain; charset="UTF-8"');
-  if (inReplyTo) lines.push(`In-Reply-To: ${inReplyTo}`);
-  lines.push("");
-  lines.push(body);
+/** Get sent emails for a user */
+export async function getSentEmails(userId: string, limit = 50, skip = 0) {
+  const emails = await SentEmail.find({ userId })
+    .sort({ sentAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
+  const total = await SentEmail.countDocuments({ userId });
+  return { emails, total };
+}
 
-  return Buffer.from(lines.join("\r\n")).toString("base64url");
+/** Build RFC 2822 multipart MIME email */
+function makeEmailRaw(from: string, to: string, subject: string, body: string, inReplyTo?: string): string {
+  const boundary = `==BOUNDARY_${Date.now()}_${Math.random().toString(36).slice(2)}==`;
+  const messageId = `<${Date.now()}.${Math.random().toString(36).slice(2)}@blackbox.amsitservices.com>`;
+  const htmlBody = plainToHtml(body);
+
+  const raw = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    `Message-ID: ${messageId}`,
+    `Date: ${new Date().toUTCString()}`,
+    `MIME-Version: 1.0`,
+    `List-Unsubscribe: <mailto:${from}?subject=unsubscribe>`,
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    "",
+    `--${boundary}`,
+    `Content-Type: text/plain; charset="UTF-8"`,
+    "",
+    body,
+    "",
+    `--${boundary}`,
+    `Content-Type: text/html; charset="UTF-8"`,
+    "",
+    htmlBody,
+    "",
+    `--${boundary}--`,
+  ];
+
+  if (inReplyTo) {
+    raw.splice(5, 0, `In-Reply-To: ${inReplyTo}`);
+    raw.splice(5, 0, `References: ${inReplyTo}`);
+  }
+
+  return Buffer.from(raw.join("\r\n")).toString("base64url");
+}
+
+/** Convert plain text to simple HTML email body */
+function plainToHtml(text: string): string {
+  const escaped = text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const paragraphs = escaped
+    .split("\n\n")
+    .map((p) => `<p>${p.replace(/\n/g, "<br>")}</p>`);
+  return `<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#333;">${paragraphs.join("\n")}</body></html>`;
 }
 
 /** Check if user has Gmail connected */
