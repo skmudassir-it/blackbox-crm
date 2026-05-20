@@ -9,7 +9,8 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "http://api-blackbox-crm.207.180.245.89.nip.io/api/:path*",
+        // Use internal Docker Swarm DNS — faster and more reliable than going through Traefik
+        destination: "http://blackbox-backend-1jindh:4000/api/:path*",
       },
     ];
   },
