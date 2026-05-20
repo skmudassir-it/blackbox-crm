@@ -12,6 +12,7 @@ import gmailRoutes from "./routes/gmail";
 import uploadRoutes from "./routes/upload";
 import subscriptionRoutes from "./routes/subscription";
 import smtpRoutes from "./routes/smtp";
+import kanbanRoutes from "./routes/kanban";
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use("/api/gmail", gmailRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/smtp", smtpRoutes);
+app.use("/api/kanban", kanbanRoutes);
 
 // Start server
 async function start() {

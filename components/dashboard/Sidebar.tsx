@@ -15,6 +15,7 @@ import {
   faXmark,
   faBox,
   faCog,
+  faColumns,
 } from "@fortawesome/free-solid-svg-icons";
 
 const navItems = [
@@ -23,6 +24,7 @@ const navItems = [
   { label: "Messages", href: "/dashboard/messages", icon: faEnvelope },
   { label: "Calendar", href: "/dashboard/calendar", icon: faCalendarAlt },
   { label: "To-Do", href: "/dashboard/todos", icon: faCheckSquare },
+  { label: "Kanban", href: "/dashboard/kanban", icon: faColumns },
   { label: "Dictionary", href: "/dashboard/dictionary", icon: faBook },
 ];
 
