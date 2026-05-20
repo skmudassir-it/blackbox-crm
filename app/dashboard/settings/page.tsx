@@ -134,6 +134,7 @@ export default function SettingsPage() {
     : "text-muted-foreground bg-muted";
 
   return (
+    <>
     <div className="max-w-2xl space-y-6">
       {message && (
         <div className={`p-4 rounded-xl text-sm flex items-center gap-2 ${
@@ -453,5 +454,6 @@ export default function SettingsPage() {
         </div>
       </div>
     )}
+    </>
   );
 }
