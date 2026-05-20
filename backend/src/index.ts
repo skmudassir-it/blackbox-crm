@@ -13,6 +13,8 @@ import uploadRoutes from "./routes/upload";
 import subscriptionRoutes from "./routes/subscription";
 import smtpRoutes from "./routes/smtp";
 import kanbanRoutes from "./routes/kanban";
+import contactsRoutes from "./routes/contacts";
+import emailGenRoutes from "./routes/emailGen";
 
 dotenv.config();
 
@@ -56,6 +58,8 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/smtp", smtpRoutes);
 app.use("/api/kanban", kanbanRoutes);
+app.use("/api/contacts", contactsRoutes);
+app.use("/api/email-gen", emailGenRoutes);
 
 // Start server
 async function start() {

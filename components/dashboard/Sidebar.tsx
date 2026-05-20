@@ -17,12 +17,16 @@ import {
   faCog,
   faColumns,
   faCircleInfo,
+  faAddressBook,
+  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard", icon: faThLarge },
   { label: "Clients", href: "/dashboard/clients", icon: faUsers },
+  { label: "Contacts", href: "/dashboard/contacts", icon: faAddressBook },
   { label: "Messages", href: "/dashboard/messages", icon: faEnvelope },
+  { label: "Email Gen", href: "/dashboard/email-generator", icon: faWandMagicSparkles },
   { label: "Calendar", href: "/dashboard/calendar", icon: faCalendarAlt },
   { label: "To-Do", href: "/dashboard/todos", icon: faCheckSquare },
   { label: "Kanban", href: "/dashboard/kanban", icon: faColumns },
