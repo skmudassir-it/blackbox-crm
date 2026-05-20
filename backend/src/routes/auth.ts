@@ -1,6 +1,14 @@
 import { Router, Request, Response } from "express";
 import { User } from "../models/User";
 import { authenticate, generateToken, AuthPayload } from "../middleware/auth";
+import { GmailToken } from "../models/GmailToken";
+import { SentEmail } from "../models/SentEmail";
+import { Contact } from "../models/Contact";
+import { Client } from "../models/Client";
+import { Todo } from "../models/Todo";
+import { Document } from "../models/Document";
+import { Appointment } from "../models/Appointment";
+import { Kanban } from "../models/Kanban";
 
 const router = Router();
 
@@ -192,6 +200,55 @@ router.post(
   async (_req: Request, res: Response): Promise<void> => {
     // JWT is stateless — client removes token
     res.json({ message: "Logged out successfully" });
+  }
+);
+
+// DELETE /api/auth/account — permanently delete user and all data
+router.delete(
+  "/account",
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req.user as AuthPayload).userId;
+      const { password } = req.body;
+
+      if (!password) {
+        res.status(400).json({ error: "Password is required to delete your account" });
+        return;
+      }
+
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({ error: "User not found" });
+        return;
+      }
+
+      const isMatch = await user.comparePassword(password);
+      if (!isMatch) {
+        res.status(401).json({ error: "Incorrect password" });
+        return;
+      }
+
+      // Delete all user data
+      await Promise.all([
+        GmailToken.deleteMany({ userId }),
+        SentEmail.deleteMany({ userId }),
+        Contact.deleteMany({ userId }),
+        Client.deleteMany({ userId }),
+        Todo.deleteMany({ userId }),
+        Document.deleteMany({ userId }),
+        Appointment.deleteMany({ userId }),
+        Kanban.deleteMany({ userId }),
+      ]);
+
+      // Delete user last
+      await User.findByIdAndDelete(userId);
+
+      res.json({ message: "Account permanently deleted" });
+    } catch (err: any) {
+      console.error("Delete account error:", err);
+      res.status(500).json({ error: "Failed to delete account" });
+    }
   }
 );
 

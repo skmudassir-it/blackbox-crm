@@ -8,6 +8,7 @@ import {
   faUser, faBuilding, faLock, faEnvelope, faSave, faCheck,
   faCamera, faTrash, faCrown, faCircleCheck, faClock,
   faCalendarCheck, faCreditCard, faArrowUpRightFromSquare,
+  faTriangleExclamation, faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
 export default function SettingsPage() {
@@ -26,6 +27,12 @@ export default function SettingsPage() {
   // Profile picture
   const [uploading, setUploading] = useState(false);
   const [profilePicPreview, setProfilePicPreview] = useState<string | null>(null);
+
+  // Delete account
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -94,6 +101,28 @@ export default function SettingsPage() {
       setMessage({ type: "error", text: res.error || "Failed to remove" });
     }
     setUploading(false);
+  }
+
+  async function handleDeleteAccount() {
+    if (deleteConfirm !== "DELETE") {
+      setMessage({ type: "error", text: "Type DELETE to confirm" });
+      return;
+    }
+    setDeleting(true);
+    setMessage(null);
+
+    const res = await api.delete<{ message: string }>("/api/auth/account", {
+      password: deletePassword,
+    });
+
+    if (res.ok) {
+      // Sign out and redirect
+      useAuthStore.getState().logout();
+      window.location.href = "/login";
+    } else {
+      setMessage({ type: "error", text: res.error || "Failed to delete account" });
+      setDeleting(false);
+    }
   }
 
   const subscription = user?.subscription;
@@ -328,6 +357,101 @@ export default function SettingsPage() {
           </button>
         </form>
       </div>
+
+      {/* Danger Zone */}
+      <div className="bg-card rounded-2xl border border-destructive/20 p-6">
+        <h3 className="text-base font-semibold text-destructive flex items-center gap-2 mb-2">
+          <FontAwesomeIcon icon={faTriangleExclamation} className="h-4 w-4" /> Danger Zone
+        </h3>
+        <p className="text-xs text-muted-foreground mb-4">
+          Permanently delete your account and all associated data. This action cannot be undone.
+        </p>
+        <button
+          onClick={() => setShowDeleteModal(true)}
+          className="inline-flex items-center gap-2 rounded-lg text-xs font-semibold bg-destructive/10 text-destructive hover:bg-destructive/20 border border-destructive/30 h-9 px-4 transition-colors"
+        >
+          <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" />
+          Delete Account
+        </button>
+      </div>
     </div>
+
+    {/* Delete Account Modal */}
+    {showDeleteModal && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="bg-card rounded-2xl border border-border/50 shadow-xl w-full max-w-md mx-4">
+          <div className="flex items-center justify-between p-6 border-b border-border/50">
+            <h3 className="text-lg font-semibold text-destructive flex items-center gap-2">
+              <FontAwesomeIcon icon={faTriangleExclamation} className="h-5 w-5" />
+              Delete Account
+            </h3>
+            <button
+              onClick={() => {
+                setShowDeleteModal(false);
+                setDeletePassword("");
+                setDeleteConfirm("");
+              }}
+              className="p-2 rounded-md hover:bg-muted text-muted-foreground"
+            >
+              <FontAwesomeIcon icon={faXmark} className="h-4 w-4" />
+            </button>
+          </div>
+
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              This will permanently delete your account, contacts, emails, and all other data.
+              <strong className="text-foreground"> This cannot be undone.</strong>
+            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Enter your password
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                placeholder="Your current password"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-1.5">
+                Type <span className="font-mono text-destructive">DELETE</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="DELETE"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-destructive font-mono"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeletePassword("");
+                  setDeleteConfirm("");
+                }}
+                className="rounded-md text-sm font-medium h-10 px-4 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting || !deletePassword || deleteConfirm !== "DELETE"}
+                className="inline-flex items-center gap-2 rounded-md text-sm font-semibold bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-5 transition-all disabled:opacity-50"
+              >
+                <FontAwesomeIcon icon={faTrash} className="h-3.5 w-3.5" />
+                {deleting ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
   );
 }
